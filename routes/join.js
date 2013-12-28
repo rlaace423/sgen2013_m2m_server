@@ -11,7 +11,7 @@ exports.join = function(req, res){
 		var nick = req.body.nick;
 		var age = req.body.age;
 
-		console.log("2input email: "+email);
+		console.log("input email: "+email);
 		console.log("input pw: "+pw);
 		console.log("input nick: "+nick);
 		console.log("input age: "+age);
@@ -29,14 +29,15 @@ exports.join = function(req, res){
 			password: 'tkdgh3426'
 		});
 
-		// 로그인 성공, 실패 여부를 알려줌.
+		// db 접속
 		client.query('use sgen');
-		client.query('select * from user where email=? and pw=?',
-			[email, pw],
+		client.query('set names utf8');
+		client.query('select * from user where email=?',
+			[email],
 			function(error, result, fields) {
 				if(error) {
 					console.log('there\'s error in query!!');
-					console.log(error);
+					console.log('ErrMsg: '+ error);
 				}
 
 				else {
@@ -46,18 +47,25 @@ exports.join = function(req, res){
 					var jsonStr = '';
 					console.log('result.length = '+result.length);
 					if(result.length==0) {
-						jsonStr = '{"code":1}';
-						res.end(jsonStr);
+						// db에 insert
+						client.query('INSERT INTO user (`email`, `pw`, `nick`, `age`, `reg_date`) VALUES (?, ?, ?, ?, NOW())',
+							[email, pw, nick, age],
+							function(error, result) {
+								// insert 실패
+								if(error) {
+									jsonStr = '{"code":102}';
+									res.end(jsonStr);
+								}
+								// insert 성공
+								else {
+									jsonStr = '{"code":101}';
+									res.end(jsonStr);
+								}
+						});
 					}
-					else if(result.length==1) {
-						// session 생성
-						req.session.email = result[0].email;
-						jsonStr = '{"code":2,"result":'+JSON.stringify(result)+'}';
-						res.end(jsonStr);
-					}
+					// 이미 존재하는 email
 					else {
-						// 이건 큰일나는 경우 ㅠㅠ
-						jsonStr = '{"code":3}';
+						jsonStr = '{"code":103}';
 						res.end(jsonStr);
 					}
 				}

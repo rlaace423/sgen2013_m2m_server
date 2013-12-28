@@ -2,7 +2,7 @@ var fs = require('fs');
 var mysql = require('mysql');
 
 exports.login = function(req, res){
-	res.writeHead(200, {'Content-Type': 'application/json'});
+	res.writeHead(200, {'Content-Type': 'application/json;charset=utf-8'});
 	try
 	{
 		// json 으로 온 데이터를 파싱.
