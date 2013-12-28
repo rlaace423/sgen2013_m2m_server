@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -8,7 +7,6 @@ var routes = require('./routes');
 var routesLogin = require('./routes/login');
 var routesJoin = require('./routes/join');
 var user = require('./routes/user');
-
 var http = require('http');
 var path = require('path');
 
@@ -31,15 +29,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
 if ('development' == app.get('env')) {
-  app.use(express.errorHandler());
+	app.use(express.errorHandler());
 }
 
 app.get('/', routes.index);
-//app.get('/users', user.list);
+// app.get('/users', user.list);
 /* insert by me */
 app.post('/login', routesLogin.login);
 app.post('/join', routesJoin.join);
 
-http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+var server = http.createServer(app).listen(app.get('port'), function(){
+	   console.log("Express server listening on port " + app.get('port'));
+	});
+
+//socket io¸¦ À§ÇØ
+var io = require('socket.io').listen(server);
+
+io.sockets.on('connection', function(socket) {
+	console.log('connection');
+	socket.emit('news', {
+		hello : 'world'
+	});
+	socket.on('my other event', function(data) {
+		console.log(data);
+	});
 });
