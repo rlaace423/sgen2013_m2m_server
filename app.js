@@ -51,6 +51,7 @@ io.set('log level', 2);
 var users = {};
 
 io.sockets.on('connection', function(socket) {
+	//접속했을 경우 브로드케스트로 클라이언트 갱신
 	
 	//프로필을 각 소켓마다 저장
 	socket.on('set profile',function(data){
@@ -59,7 +60,8 @@ io.sockets.on('connection', function(socket) {
 				var user = {};
 				user.socket_id = socket.id;
 				users[data.nickname] = user;
-				socket.emit('profile ready');
+				socket.emit('user connected');
+				socket.broadcast.emit('user connected');
 			});
 		});
 	});
@@ -79,8 +81,28 @@ io.sockets.on('connection', function(socket) {
 		}
 	});
 	
+	//대화 요청
 	socket.on('talk request',function(data){
-		
+		var socket_id = users[data.userName].socket_id;
+		var reqMessage = {};
+		reqMessage.userProfile = data.profile;
+		io.sockets.sockets[socket_id].emit('talk request', reqMessage);
+	});
+	
+	//대화 요청 응답
+	socket.on('talk request reply',function(data){
+		//소켓을 찾기 위해 닉네임을 그대로 포워딩받음
+		var socket_id = users[data.userProfile.nickname].socket_id;
+		var reqMessage = {};
+		if(data.reply == 'yes'){
+			reqMessage.reply = 'yes';
+			//data.nickname 님이 수락했습니다.
+		}else if(data.reply == 'no'){
+			//data.nickname 님이 거절했습니다.
+			reqMessage.reply = 'no';
+		}else{
+			console.log('대화 요청 응답 잘못된 패킷 들어옴');
+		}
 	});
 });
 
