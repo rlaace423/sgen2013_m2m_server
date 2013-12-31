@@ -48,26 +48,39 @@ var io = require('socket.io').listen(server);
 //log level 수정
 io.set('log level', 2);
 
-var users = [];
+var users = {};
 
 io.sockets.on('connection', function(socket) {
 	
+	//프로필을 각 소켓마다 저장
 	socket.on('set profile',function(data){
 		socket.set('nickname',data.nickname,function(){
 			socket.set('age',data.age,function(){
 				var user = {};
-				
-				user.nickname = data.nickname;
-				user.age = data.age;
-				users.push(user);
-				
+				user.socket_id = socket.id;
+				users[data.nickname] = user;
 				socket.emit('profile ready');
 			});
 		});
 	});
 	
+	//접속자 정보 요청
 	socket.on('get users',function(){
-		socket.emit('user profile',users);
+		for( var socket_id in io.sockets.sockets){
+			io.sockets.sockets[socket_id].get('nickname',function(err,nickname){
+				io.sockets.sockets[socket_id].get('age',function(err,age){
+					var user = {};
+					user.nickname = nickname;
+					user.age = age;
+					//접속자 정보 전송
+					socket.emit('user profile',user);
+				});
+			});
+		}
+	});
+	
+	socket.on('talk request',function(data){
+		
 	});
 });
 
